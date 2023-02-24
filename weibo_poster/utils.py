@@ -150,6 +150,7 @@ class Poster(Request):
         self.uid = uid
         self.token = token
         self.baseurl = baseurl
+        self.__vaild = False
 
         super().__init__()
 
@@ -233,10 +234,16 @@ class Poster(Request):
             return wapper
         return inner
 
+    @staticmethod
+    async def stepBrother():
+        "I'm STUCK"
+        while True:
+            await asyncio.sleep(60)
+
     @classmethod
     def run(cls: "Poster", fn: Callable, *posters: "Poster"):
         """
-        fn: 阻塞函数
+        fn: 阻塞函数 如果没有可以传入 Poster.stepBrother
 
         *posters: 提交器 会调用对应的 login() 方法
         """
