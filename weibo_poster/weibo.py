@@ -56,8 +56,7 @@ class WeiboComment(Post):
             hour = timedelta(hours=int(hour))
             created_at -= hour
         elif u"昨天" in timeText:
-            day = timedelta(days=1)
-            timeText -= day
+            created_at -= timedelta(days=1)
         elif timeText.count('-') == 1:
             created_at -= timedelta(days=365)    
         
