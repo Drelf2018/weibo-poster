@@ -30,18 +30,23 @@ pip install weibo-poster
 python 会写不
 
 ```python
-from bilibili_api.live import LiveDanmaku
-from weibo_poster import Poster, WeiboRequest
+from weibo_poster import BiliGo, DanmakuPost, Poster, RoomInfo, WeiboRequest, logger
 
-room = LiveDanmaku(21452505)
 poster = Poster(188888131, "", "")
 session = WeiboRequest("")
+biligo = BiliGo("poster", "http://localhost:8080", 21452505)
 
+async def uidFilter(_: RoomInfo, danmaku: DanmakuPost):
+    if danmaku.uid == "434334701":
+        await danmaku.update()
+        return True
+    return False
 
-@room.on("DANMU_MSG")
-async def recv(event):
-    print("1")
+@biligo.on("DANMU_MSG", uidFilter)
+async def recv(roomInfo: RoomInfo, danmaku: DanmakuPost):
+    logger.info(danmaku)
 
+@Poster.job(name="七海", start=2, args=["7198559139"])
 async def weibo(uid: str):
     post = None
     async for post in session.posts(uid):
@@ -51,8 +56,7 @@ async def weibo(uid: str):
             if comment.uid == uid:
                 await poster.update(comment)
 
-Poster.add_job(fn=weibo, name="七海", count=1, start=2, args=["7198559139"])
-Poster.run(room.connect, poster)
+Poster.run(biligo.run, poster)
 ```
 
 哦那你就会了

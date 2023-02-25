@@ -1,12 +1,56 @@
+from dataclasses import dataclass
 from json import loads
 from typing import Callable, Coroutine
-from dataclasses import dataclass
 
 import httpx
 from aiowebsocket.converses import AioWebSocket
+from bilibili_api.user import User
 from bilibili_api.utils.AsyncEvent import AsyncEvent
 
-from .utils import logger
+from .utils import Post, isAsync, logger
+
+
+class DanmakuPost(Post):
+    @classmethod
+    def transform(cls: "DanmakuPost", event: dict):
+        content: dict = event["content"]
+        info: list = content["info"]
+        pic: str = ""
+        if isinstance(info[0][13], dict):  
+            pic = info[0][13].get("url", "")
+        time = int(info[0][4] / 1000)
+        roomid = str(event["live_info"]["room_id"])
+        return {
+            "mid": f"{roomid}_{time}",
+            "time": time,
+            "text": info[1],
+            "type": "danmaku",
+            "source": roomid,
+
+            "uid": str(info[2][0]),
+            "name": info[2][1],
+            "face": "",
+            "pendant": "",
+            "description": "",
+
+            "follower": "",
+            "following": "",
+
+            "attachment": [],
+            "picUrls": [pic] if pic else [],
+            "repost": None
+        }
+
+    async def update(self):
+        user = User(self.uid)
+        data = await user.get_user_info()
+        self.face = data["face"]
+        self.pendant = data.get("pendant", {}).get("image", "")
+        self.description = data["sign"]
+        data = await user.get_relation_info()
+        self.follower = data["follower"]
+        self.following = data["following"]
+        return self
 
 
 @dataclass
@@ -47,7 +91,7 @@ class BiliGo(AsyncEvent):
         # 将监听房间号告知 biligo-ws-live
         httpx.post(self.url+'/subscribe', headers={"Authorization": self.aid}, data={'subscribes': list(listening_rooms)})
 
-    def on(self, event_name: str) -> Callable:
+    def on(self, event_name: str, filter: Callable = lambda *_, **__: True) -> Callable:
         """
         装饰器注册事件监听器。
 
@@ -55,10 +99,16 @@ class BiliGo(AsyncEvent):
             event_name (str): 事件名。
         """
         def decorator(func: Coroutine):
+            isAsyncFunction = isAsync(filter)
             async def wapper(args):
+                if isAsyncFunction:
+                    if not await filter(*args):
+                        return
+                elif not filter(*args):
+                    return
                 return await func(*args)
-
             self.add_event_listener(event_name, wapper)
+
             return func
 
         return decorator
@@ -71,5 +121,5 @@ class BiliGo(AsyncEvent):
         async with AioWebSocket(self.url + f"/ws?id={self.aid}") as aws:
             logger.info('Adapter 连接成功')
             async for evt in Receive(aws.manipulator.receive):
-                roomInfo = RoomInfo(**evt["live_info"])
-                self.dispatch(evt['command'], (roomInfo, evt["content"]))
+                if evt["command"] == "DANMU_MSG":
+                    self.dispatch(evt["command"], (RoomInfo(**evt["live_info"]), DanmakuPost.parse(evt)))

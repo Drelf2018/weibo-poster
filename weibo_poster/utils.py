@@ -78,7 +78,7 @@ class Post:
         if post is None or len(post) == 0:
             return None
         post = cls.transform(post)
-        return Post(repost=cls.parse(post.pop("repost")), **post)
+        return cls(repost=cls.parse(post.pop("repost")), **post)
 
     @property
     def date(self) -> str:
@@ -172,7 +172,7 @@ class Poster(Request):
                 for user in self.users:
                     if user.uid == self.uid:
                         self.me = user
-                        logger.info(f"用户 {user.uid} LV{user.level}({user.xp}/100) 登录成功")
+                        logger.info(f"用户 {user.uid} LV{user.level} XP{user.xp} 登录成功")
             else:
                 raise Exception(data["data"])
         except Exception as e:
@@ -217,21 +217,19 @@ class Poster(Request):
             return None
 
     @classmethod
-    def add_job(cls: "Poster", fn, start: int = 0, interval: int = 5, name: str = "", count: int = -1, args: list = list(), kwargs: dict = dict()):
+    def add_job(cls: "Poster", fn, start: int = 0, interval: int = 5, name: str = "", count: int = 1, args: list = list(), kwargs: dict = dict()):
+        "新增任务"
         @cls.scheduler.scheduled_job("interval", next_run_time=cls.run_time(start), seconds=interval, args=args, kwargs=kwargs)
         @countLog(name, count)
         async def wapper(*arg, **kwargs):
             return await fn(*arg, **kwargs)
+        return fn
 
     @classmethod
-    def job(cls: "Poster", start: int = 0, interval: int = 5, name: str = "", count: int = -1, args: list = list(), kwargs: dict = dict()):
+    def job(cls: "Poster", start: int = 0, interval: int = 5, name: str = "", count: int = 1, args: list = list(), kwargs: dict = dict()):
         "轮询装饰器"
         def inner(fn):
-            @cls.scheduler.scheduled_job("interval", next_run_time=cls.run_time(start), seconds=interval, args=args, kwargs=kwargs)
-            @countLog(name, count)
-            async def wapper(*arg, **kwargs):
-                return await fn(*arg, **kwargs)
-            return wapper
+            return cls.add_job(fn, start=start, interval=interval, name=name, count=count, args=args, kwargs=kwargs)
         return inner
 
     @staticmethod
