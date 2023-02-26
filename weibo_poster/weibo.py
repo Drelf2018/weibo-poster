@@ -57,9 +57,10 @@ class WeiboComment(Post):
             created_at -= hour
         elif u"昨天" in timeText:
             created_at -= timedelta(days=1)
-        elif timeText.count('-') == 1:
-            created_at -= timedelta(days=365)    
-        
+        elif timeText.count('-') != 0:
+            if timeText.count('-') == 1:
+                timeText = f"{created_at.year}-{timeText}"
+            created_at = datetime.strptime(timeText, "%Y-%m-%d")
         return int(created_at.timestamp())
 
     @classmethod
