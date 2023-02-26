@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf8") as f:
 
 setup(
     name="weibo-poster",
-    version="0.0.3",
+    version="0.0.5",
     license="MIT",
     author="Drelf2018",
     author_email="drelf2018@outlook.com",
@@ -26,7 +26,9 @@ setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
     ],
-    
+    package_data={
+        "": ["requirements.txt"]
+    },
     url="https://github.com/Drelf2018/weibo-poster",
     python_requires=">=3.8",
 )
