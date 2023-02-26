@@ -180,6 +180,13 @@ class Poster(Request):
             self.__vaild = False
         return self
 
+    async def online(self):
+        "更新在线状态"
+        if self.__vaild:
+            await self.session.get(f"{self.baseurl}/online", params={"token": self.token})
+        else:
+            logger.error("未登录")
+
     async def update(self, post: Post):
         "增"
         if self.__vaild:
