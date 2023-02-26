@@ -95,7 +95,7 @@ class WeiboRequest(Request):
         super().__init__(cookies=cookies)
         self.usersComments: Dict[str, Comments] = dict()
 
-    async def posts(self, uid: int | str):
+    async def posts(self, uid: str):
         data = await self.request("GET", f"https://m.weibo.cn/api/container/getIndex?containerid=107603{uid}")
         if data is None:
             return

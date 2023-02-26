@@ -2,3 +2,4 @@ lxml
 httpx
 apscheduler
 bilibili-api-python
+aiowebsocket

@@ -70,6 +70,7 @@ class Post:
     @classmethod
     def transform(cls: "Post", post: dict):
         "将输入 parse 的数据字典转为 Post 格式"
+        post.pop("comments")
         return post
 
     @classmethod
