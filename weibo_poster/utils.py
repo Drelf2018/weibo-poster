@@ -41,8 +41,7 @@ class User:
     level: int
     xp: int
     uid: int
-    url: str
-    watch: List[str]
+    file: str
 
 
 @dataclass
@@ -207,6 +206,16 @@ class Poster(Request):
         else:
             logger.error(data["data"])
             return []
+
+    async def config(self, data):
+        "配"
+        res = await self.session.post(f"{self.baseurl}/config", params={"token": self.token}, json=data)
+        data = res.json()
+        if data["code"] == 0:
+            return data["data"]
+        else:
+            logger.error(data["data"])
+            return ""
 
     async def modify(self, user: User) -> User:
         "改"

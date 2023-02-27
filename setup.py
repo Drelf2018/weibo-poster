@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf8") as f:
 
 setup(
     name="weibo-poster",
-    version="0.0.6",
+    version="0.0.8",
     license="MIT",
     author="Drelf2018",
     author_email="drelf2018@outlook.com",
