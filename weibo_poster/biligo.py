@@ -88,6 +88,9 @@ class BiliGo(AsyncEvent):
         self.aid = aid
         # biligo-ws-live 运行地址
         self.url = url
+        self.update(listening_rooms)
+    
+    def update(self, listening_rooms):
         # 将监听房间号告知 biligo-ws-live
         httpx.post(self.url+'/subscribe', headers={"Authorization": self.aid}, data={'subscribes': list(listening_rooms)})
 
@@ -100,13 +103,13 @@ class BiliGo(AsyncEvent):
         """
         def decorator(func: Coroutine):
             isAsyncFunction = isAsync(filter)
-            async def wapper(args):
+            async def wapper(*args, **kwargs):
                 if isAsyncFunction:
-                    if not await filter(*args):
+                    if not await filter(*args, **kwargs):
                         return
-                elif not filter(*args):
+                elif not filter(*args, **kwargs):
                     return
-                return await func(*args)
+                return await func(*args, **kwargs)
             self.add_event_listener(event_name, wapper)
 
             return func
@@ -122,4 +125,4 @@ class BiliGo(AsyncEvent):
             logger.info('Adapter 连接成功')
             async for evt in Receive(aws.manipulator.receive):
                 if evt["command"] == "DANMU_MSG":
-                    self.dispatch(evt["command"], (RoomInfo(**evt["live_info"]), DanmakuPost.parse(evt)))
+                    self.dispatch(evt["command"], RoomInfo(**evt["live_info"]), DanmakuPost.parse(evt))

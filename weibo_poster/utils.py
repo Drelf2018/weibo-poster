@@ -37,6 +37,15 @@ def countLog(name: str = "", start: int = 0):
 
 
 @dataclass
+class Job:
+    patten: str
+    method: str
+    url: str
+    headers: Dict[str, str] = field(default_factory=dict)
+    data: Dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
 class User:
     level: int
     xp: int
@@ -207,9 +216,12 @@ class Poster(Request):
             logger.error(data["data"])
             return []
 
-    async def config(self, data):
+    async def config(self, listening: List[str], jobs: List[Job]):
         "配"
-        res = await self.session.post(f"{self.baseurl}/config", params={"token": self.token}, json=data)
+        res = await self.session.post(f"{self.baseurl}/config", params={"token": self.token}, json={
+            "listening": listening,
+            "jobs": [job.__dict__ for job in jobs]
+        })
         data = res.json()
         if data["code"] == 0:
             return data["data"]
